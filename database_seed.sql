@@ -339,4 +339,3 @@ INSERT INTO public.token_blacklist VALUES ('677b9cc6-52af-444c-95ee-f1b8935984bd
 --
 
 \unrestrict LmPlZQYnS6NpVZCKkbofpGObfhDyoHDhrOgq03N4mdek7bBGaVNg7UaYR5dBHlx
-
