@@ -12,12 +12,12 @@ export const useAuth = () => {
     const storedToken = localStorage.getItem('token');
     console.log('useAuth useEffect:', { storedToken, user, loading, isAuthenticated });
     
-    // Only fetch user if we have a stored token but no user data
+    // Only fetch user if we have a stored token but no user data and not currently loading
     if (storedToken && !user && !loading) {
       console.log('useAuth: Dispatching getCurrentUser');
       dispatch(getCurrentUser());
     }
-  }, [dispatch, user, loading]);
+  }, [dispatch, user, loading]); // Removed isAuthenticated from dependencies
 
   const handleLogout = () => {
     dispatch(logout());

@@ -24,7 +24,7 @@ export default function ExecutorDashboard() {
 
   const myTasks = tasks.filter((t) => t.assignee_id === user?.id);
 
-  if (loading) {
+  if (loading || !tasks) {
     return <div>Loading...</div>;
   }
 

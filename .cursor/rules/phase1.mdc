@@ -1,0 +1,76 @@
+---
+alwaysApply: false
+---
+API doc - Base for Frontend
+Note : CFO read only
+Analyst has powers to change
+EO can be handled by many pmo
+Pmo can have/be a team too
+Employee makes task update in task update is only once a day also he should be able to see the history of updates
+—----------------------------------------------------------------------------------------------------------------
+
+
+
+Auth related:
+
+
+Login:
+POST request:
+
+localhost:8000/
+	Url: app_url/api/login
+	Request:
+		{
+	Email: “”,
+	password:””
+}
+	Response (200): 
+		{
+			Token: “”,
+			user_data: {} based on the structure of user model
+			role : “”
+}
+
+Logout:
+POST req:
+	URl: app_url/api/logout
+	Auth headers: JWT_token
+	No request body needed
+
+
+
+
+
+
+
+Data Related:
+
+ALL requests:
+	CFO:
+Return All EOs (GET)
+Return All employee ( inc, PMOs, Bottom level employees, directors) (GET)
+Return All task (GET)
+Change or add PMOs managing an EO (PUT)
+
+	PMO:
+Return All Tasks Related to his EO only (GET)
+He won’t be able to gell all tasks of other EOs
+Return All Employees under him (GET)
+Return all Daily_updates from all the employees under him (via emails) (GET)
+Change/Remove an Assignee from task (PUT)
+
+	Employees:
+Return all updates that he posted (Via emails or dashboard) (GET)
+Return all active tasks that he’s working under right now (GET)
+Add an Daily_task update (POST)
+
+
+
+
+Todo - Logins for different roles  
+
+
+
+
+
+

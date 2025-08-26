@@ -1,5 +1,5 @@
 import React from "react";
-import { AppBar, Toolbar, Typography, Box, Button, IconButton, Tooltip, Container } from "@mui/material";
+import { AppBar, Toolbar, Typography, Button, IconButton, Tooltip, Container } from "@mui/material";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useThemeMode } from "../ui/ThemeModeProvider";
@@ -8,7 +8,7 @@ import Brightness7Icon from "@mui/icons-material/Brightness7";
 import PageFade from "../ui/PageFade";
 
 export default function AppShell({ children }) {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, loading, user, logout } = useAuth();
   const { pathname } = useLocation();
   const { mode, toggle } = useThemeMode();
   const isActive = (m) => pathname === m || pathname.startsWith(m);
@@ -16,6 +16,11 @@ export default function AppShell({ children }) {
   const handleLogout = () => {
     logout();
   };
+
+  // Don't render until user data is fully loaded
+  if (loading || !user) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
@@ -64,7 +69,7 @@ export default function AppShell({ children }) {
       </AppBar>
 
       <Container sx={{ py: 3 }}>
-        <PageFade>{children}</PageFade>
+        <PageFade key={pathname}>{children}</PageFade>
       </Container>
     </>
   );

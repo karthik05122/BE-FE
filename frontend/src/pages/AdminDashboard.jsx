@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Stack, Card, CardContent, Typography, Button, Chip, TextField, MenuItem
 } from "@mui/material";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import SectionHeader from "../ui/SectionHeader";
 import {
@@ -11,21 +11,17 @@ import {
   fetchExecutiveOrders,
   fetchEmailLogs,
 } from '../store/slices/dashboardSlice';
-import { fetchUserTasks } from '../store/slices/taskSlice';
 
 export default function AdminDashboard() {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const { stats, executiveOrders, emailLogs, loading } = useSelector(
+  const { executiveOrders, loading } = useSelector(
     (state) => state.dashboard
   );
-  const { tasks } = useSelector((state) => state.task);
 
   useEffect(() => {
     dispatch(fetchDashboardStats());
     dispatch(fetchExecutiveOrders());
     dispatch(fetchEmailLogs());
-    dispatch(fetchUserTasks());
   }, [dispatch]);
 
   const getEOStatusColor = (status) => {
@@ -43,7 +39,7 @@ export default function AdminDashboard() {
     }
   };
 
-  if (loading) {
+  if (loading || !executiveOrders) {
     return <div>Loading...</div>;
   }
 

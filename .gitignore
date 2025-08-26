@@ -1,3 +1,4 @@
 .env
 outbox
 .venv
+node_modules

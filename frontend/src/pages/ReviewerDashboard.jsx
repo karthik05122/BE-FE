@@ -1,30 +1,26 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Stack, Card, CardContent, Typography, Button, Chip, TextField, MenuItem
+  Stack, Card, CardContent, Typography, Button, Chip
 } from "@mui/material";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import SectionHeader from "../ui/SectionHeader";
 import {
   fetchDashboardStats,
   fetchExecutiveOrders,
   fetchEmailLogs,
 } from '../store/slices/dashboardSlice';
-import { fetchUserTasks } from '../store/slices/taskSlice';
 
 export default function ReviewerDashboard() {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const { stats, executiveOrders, emailLogs, loading } = useSelector(
+  const { executiveOrders, loading } = useSelector(
     (state) => state.dashboard
   );
-  const { tasks } = useSelector((state) => state.task);
 
   useEffect(() => {
     dispatch(fetchDashboardStats());
     dispatch(fetchExecutiveOrders());
     dispatch(fetchEmailLogs());
-    dispatch(fetchUserTasks());
   }, [dispatch]);
 
   const getEOStatusColor = (status) => {
@@ -46,7 +42,7 @@ export default function ReviewerDashboard() {
     (eo) => eo.status === 'pending'
   );
 
-  if (loading) {
+  if (loading || !executiveOrders) {
     return <div>Loading...</div>;
   }
 
