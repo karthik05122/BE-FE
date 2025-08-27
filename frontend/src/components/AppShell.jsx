@@ -30,27 +30,28 @@ export default function AppShell({ children }) {
             U.S. DoL — AI Task Management
           </Typography>
 
-          <Button component={RouterLink} to="/eos" color={isActive("/eo") || pathname === "/eos" ? "primary" : "inherit"}>EOs</Button>
+          {/* Hide EO button for executors */}
+          {user?.role !== "executor" && (
+            <Button component={RouterLink} to="/eos" color={isActive("/eo") || pathname === "/eos" ? "primary" : "inherit"}>EOs</Button>
+          )}
 
           {user?.role === "executor" && (
             <>
-              <Button component={RouterLink} to="/dashboard/executor" color={isActive("/dashboard/executor") ? "primary" : "inherit"}>My Dashboard</Button>
-              <Button component={RouterLink} to="/my-updates" color={pathname === "/my-updates" ? "primary" : "inherit"}>My Updates</Button>
+              <Button component={RouterLink} to="/dashboard/executor" color={isActive("/dashboard/executor") ? "primary" : "inherit"}>Dashboard</Button>
+              <Button component={RouterLink} to="/my-updates" color={pathname === "/my-updates" ? "primary" : "inherit"}>Updates</Button>
             </>
           )}
 
           {user?.role === "admin" && (
             <>
               <Button component={RouterLink} to="/dashboard/admin" color={isActive("/dashboard/admin") ? "primary" : "inherit"}>Admin Console</Button>
-              <Button component={RouterLink} to="/approvals" color={pathname === "/approvals" ? "primary" : "inherit"}>Approvals</Button>
-              <Button component={RouterLink} to="/tasks" color={pathname === "/tasks" ? "primary" : "inherit"}>All Tasks</Button>
+              <Button component={RouterLink} to="/tasks" color={pathname === "/tasks" ? "primary" : "inherit"}>Tasks</Button>
             </>
           )}
 
           {user?.role === "reviewer" && (
             <>
               <Button component={RouterLink} to="/dashboard/reviewer" color={isActive("/dashboard/reviewer") ? "primary" : "inherit"}>Reviewer Console</Button>
-              <Button component={RouterLink} to="/approvals" color={pathname === "/approvals" ? "primary" : "inherit"}>Approvals</Button>
             </>
           )}
 

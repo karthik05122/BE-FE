@@ -16,6 +16,7 @@ export default function LoginPage() {
     e.preventDefault();
     const result = await dispatch(login({ email, password }));
     if (login.fulfilled.match(result)) {
+      // Navigate to dashboard, which will redirect to appropriate role-based dashboard
       navigate("/dashboard");
     }
   };

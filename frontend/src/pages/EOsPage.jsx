@@ -1,25 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  Stack, Card, CardContent, Typography, Button, Chip, TextField, MenuItem, Alert,
-  Box, FormControl, InputLabel, Select, Dialog, DialogTitle, DialogContent,
+  Stack, Card, CardContent, Typography, Button, Chip, Alert,
+  Box, FormControl, Dialog, DialogTitle, DialogContent,
   DialogActions, Divider, IconButton, Tooltip
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
-import PeopleIcon from "@mui/icons-material/People";
 import SectionHeader from "../ui/SectionHeader";
 import {
-  fetchDashboardStats,
-  fetchEmailLogs,
+  fetchExecutiveOrders,
 } from '../store/slices/dashboardSlice';
 import { useAuth } from '../hooks/useAuth';
 
-export default function AdminDashboard() {
+export default function EOsPage() {
   const dispatch = useDispatch();
   const { user } = useAuth();
-  const { loading, stats, error } = useSelector(
+  const { executiveOrders, loading, error } = useSelector(
     (state) => state.dashboard
   );
 
@@ -30,12 +28,8 @@ export default function AdminDashboard() {
   const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
   const [assigningPMO, setAssigningPMO] = useState(false);
 
-  // Debug logging
-  console.log('AdminDashboard State:', { loading, stats, error });
-
   useEffect(() => {
-    dispatch(fetchDashboardStats());
-    dispatch(fetchEmailLogs());
+    dispatch(fetchExecutiveOrders());
   }, [dispatch]);
 
   const handlePMOAssignment = (eo) => {
@@ -70,6 +64,7 @@ export default function AdminDashboard() {
       
       // Close dialog and refresh data
       setAssignmentDialogOpen(false);
+      dispatch(fetchExecutiveOrders());
       
       // Show success message (you could add a snackbar here)
     } catch (error) {
@@ -92,7 +87,20 @@ export default function AdminDashboard() {
     ];
   };
 
-
+  const getEOStatusColor = (status) => {
+    switch (status) {
+      case 'processed':
+        return 'success';
+      case 'pending':
+        return 'warning';
+      case 'received':
+        return 'info';
+      case 'error':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -103,10 +111,10 @@ export default function AdminDashboard() {
       {/* Welcome Header */}
       <Box sx={{ textAlign: 'center', py: 2, mb: 3 }}>
         <Typography variant="h4" fontWeight={700} color="primary.main">
-          Welcome back, {user?.name?.split(' ')[0] || 'Administrator'}
+          Executive Orders
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-          Manage Executive Orders and PMO assignments
+          View and manage all Executive Orders
         </Typography>
       </Box>
 
@@ -116,84 +124,104 @@ export default function AdminDashboard() {
         </Alert>
       )}
       
-      {stats && (
-        <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
-          <Card sx={{ minWidth: 200, flex: 1 }}>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography color="text.secondary" gutterBottom>
-                Total Executive Orders
-              </Typography>
-              <Typography variant="h4" color="primary.main">
-                {stats.executive_orders?.total || 0}
-              </Typography>
-            </CardContent>
-          </Card>
-          <Card sx={{ minWidth: 200, flex: 1 }}>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography color="text.secondary" gutterBottom>
-                Total Tasks
-              </Typography>
-              <Typography variant="h4" color="info.main">
-                {stats.tasks?.total || 0}
-              </Typography>
-            </CardContent>
-          </Card>
-          <Card sx={{ minWidth: 200, flex: 1 }}>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography color="text.secondary" gutterBottom>
-                Active PMOs
-              </Typography>
-              <Typography variant="h4" color="secondary.main">
-                {getAvailablePMOs().length}
-              </Typography>
-            </CardContent>
-          </Card>
-          <Card sx={{ minWidth: 200, flex: 1 }}>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography color="text.secondary" gutterBottom>
-                System Status
-              </Typography>
-              <Typography variant="h6" color="success.main">
-                Operational
-              </Typography>
-            </CardContent>
-          </Card>
-        </Stack>
-      )}
-      
-            {/* PMO Assignment Overview */}
       <SectionHeader
-        title="PMO Assignment Management"
-        subtitle="Assign and manage PMOs for Executive Orders"
+        title="Executive Orders"
+        actions={
+          <Button startIcon={<AddIcon/>}>
+            New EO Intake
+          </Button>
+        }
       />
       
-      <Card sx={{ borderRadius: 3, mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" fontWeight={600} gutterBottom>
-            Quick Actions
-          </Typography>
-          <Typography color="text.secondary" sx={{ mb: 2 }}>
-            Use the navigation buttons above to view Executive Orders and Tasks, then assign PMOs as needed.
-          </Typography>
-          <Stack direction="row" spacing={2}>
-            <Button 
-              component={RouterLink} 
-              to="/eos" 
-              variant="contained" 
-              startIcon={<AddIcon/>}
-            >
-              View Executive Orders
-            </Button>
-                                           <Button 
-                   component={RouterLink} 
-                   to="/tasks" 
-                   variant="outlined"
-                 >
-                   View Tasks
-                 </Button>
-          </Stack>
-        </CardContent>
-      </Card>
+      <Stack spacing={2}>
+        {(executiveOrders || []).map((eo) => (
+          <Card key={eo.id} sx={{ borderRadius: 3 }}>
+            <CardContent>
+              <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="h6" fontWeight={600}>
+                    {eo.number || 'EO-' + eo.id.slice(0, 8)} — {eo.title || 'Untitled'}
+                  </Typography>
+                  <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+                    {eo.summary || 'No summary available'}
+                  </Typography>
+                  
+                  <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
+                    {eo.created_at && (
+                      <Typography variant="body2" color="text.secondary">
+                        📅 Created: {new Date(eo.created_at).toLocaleDateString()}
+                      </Typography>
+                    )}
+                    {eo.source && (
+                      <Typography variant="body2" color="text.secondary">
+                        📧 Source: {eo.source}
+                      </Typography>
+                    )}
+                    {eo.directive_count && (
+                      <Typography variant="body2" color="text.secondary">
+                        📋 Directives: {eo.directive_count}
+                      </Typography>
+                    )}
+                  </Stack>
+                </Box>
+                
+                <Stack spacing={1} alignItems="flex-end">
+                  <Chip label={eo.status} size="small" color={getEOStatusColor(eo.status)} />
+                  <Chip 
+                    label={eo.pmo_id ? `PMO Assigned` : "No PMO"} 
+                    size="small" 
+                    variant="outlined"
+                    color={eo.pmo_id ? "success" : "default"}
+                  />
+                  {eo.task_count && (
+                    <Chip 
+                      label={`${eo.task_count} Tasks`} 
+                      size="small" 
+                      variant="outlined"
+                      color="info"
+                    />
+                  )}
+                </Stack>
+              </Stack>
+
+              <Divider sx={{ my: 2 }} />
+
+              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }} alignItems="center">
+                <Button component={RouterLink} to={`/eos/${eo.id}`} size="small" variant="outlined">
+                  View Details
+                </Button>
+                
+                {user?.role === "admin" && (
+                  <Tooltip title="Assign PMOs to this Executive Order">
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={() => handlePMOAssignment(eo)}
+                      sx={{ border: '1px solid', borderColor: 'divider' }}
+                    >
+                      <AssignmentIndIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
+
+                {eo.source_url && (
+                  <Button size="small" variant="outlined" href={eo.source_url} target="_blank" rel="noreferrer">
+                    View Original EO
+                  </Button>
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
+        ))}
+      </Stack>
+
+      {(!executiveOrders || executiveOrders.length === 0) && (
+        <Card>
+          <CardContent>
+            <Typography color="text.secondary">No executive orders found.</Typography>
+          </CardContent>
+        </Card>
+      )}
 
       {/* PMO Assignment Dialog */}
       <Dialog 

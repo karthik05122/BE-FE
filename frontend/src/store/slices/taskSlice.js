@@ -13,6 +13,18 @@ export const fetchUserTasks = createAsyncThunk(
   }
 );
 
+export const fetchAllTasks = createAsyncThunk(
+  'task/fetchAllTasks',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/dashboard/tasks');
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || 'Failed to fetch all tasks');
+    }
+  }
+);
+
 export const fetchTaskDetails = createAsyncThunk(
   'task/fetchTaskDetails',
   async (taskId, { rejectWithValue }) => {
@@ -40,9 +52,37 @@ export const updateTaskStatus = createAsyncThunk(
   }
 );
 
+export const submitDailyUpdate = createAsyncThunk(
+  'task/submitDailyUpdate',
+  async (dailyUpdateData, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/dashboard/employee/daily-update', dailyUpdateData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || 'Failed to submit daily update');
+    }
+  }
+);
+
+export const assignTaskToExecutor = createAsyncThunk(
+  'task/assignTaskToExecutor',
+  async ({ taskId, assigneeId }, { rejectWithValue }) => {
+    try {
+      const response = await api.put(`/dashboard/pmo/tasks/${taskId}/assignee`, {
+        assignee_id: assigneeId
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || 'Failed to assign task');
+    }
+  }
+);
+
 const initialState = {
   tasks: [],
+  allTasks: [],
   selectedTask: null,
+  dailyUpdates: [],
   loading: false,
   error: null,
 };
@@ -75,6 +115,21 @@ const taskSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(fetchAllTasks.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAllTasks.fulfilled, (state, action) => {
+        state.loading = false;
+        // Extract data from the API response structure {success, message, data}
+        const allTaskList = action.payload?.data?.tasks || action.payload?.tasks || [];
+        state.allTasks = Array.isArray(allTaskList) ? allTaskList : [];
+        state.error = null;
+      })
+      .addCase(fetchAllTasks.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
       .addCase(fetchTaskDetails.fulfilled, (state, action) => {
         // Extract data from the API response structure {success, message, data}
         state.selectedTask = action.payload?.data || action.payload;
@@ -90,6 +145,44 @@ const taskSlice = createSlice({
           state.selectedTask = updatedTask;
         }
         state.error = null;
+      })
+      .addCase(submitDailyUpdate.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(submitDailyUpdate.fulfilled, (state, action) => {
+        state.loading = false;
+        // Extract data from the API response structure {success, message, data}
+        const newUpdate = action.payload?.data || action.payload;
+        if (newUpdate) {
+          state.dailyUpdates.push(newUpdate);
+        }
+        state.error = null;
+      })
+      .addCase(submitDailyUpdate.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(assignTaskToExecutor.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(assignTaskToExecutor.fulfilled, (state, action) => {
+        state.loading = false;
+        // Extract data from the API response structure {success, message, data}
+        const updatedTask = action.payload?.data || action.payload;
+        // Update the task in both tasks and allTasks arrays
+        state.tasks = state.tasks.map(task =>
+          task.id === updatedTask.task_id ? { ...task, assignee_id: updatedTask.new_assignee_id } : task
+        );
+        state.allTasks = state.allTasks.map(task =>
+          task.id === updatedTask.task_id ? { ...task, assignee_id: updatedTask.new_assignee_id } : task
+        );
+        state.error = null;
+      })
+      .addCase(assignTaskToExecutor.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
