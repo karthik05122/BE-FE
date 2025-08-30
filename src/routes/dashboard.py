@@ -137,11 +137,33 @@ def get_user_tasks(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
     status: Optional[str] = None,
+    assignee: Optional[str] = None,
     limit: int = 50,
     offset: int = 0
 ):
-    """Get tasks assigned to the current user"""
-    query = db.query(Task).filter(Task.assignee_id == current_user.id)
+    """Get tasks - current user's tasks or specific assignee's tasks (for reviewers)"""
+    
+    # If assignee parameter is provided and user is a reviewer, get that assignee's tasks
+    if assignee and current_user.role == "reviewer":
+        # Verify the assignee exists and is under this reviewer's supervision
+        assignee_user = db.query(User).filter(User.id == assignee).first()
+        if not assignee_user:
+            raise HTTPException(status_code=404, detail="Assignee not found")
+        
+        # Get tasks for the specified assignee
+        query = db.query(Task).filter(Task.assignee_id == assignee)
+        
+        # Get assignee info for response
+        assignee_info = {
+            "id": str(assignee_user.id),
+            "name": assignee_user.name,
+            "email": assignee_user.email,
+            "org_role": assignee_user.org_role
+        }
+    else:
+        # Get current user's tasks
+        query = db.query(Task).filter(Task.assignee_id == current_user.id)
+        assignee_info = None
     
     if status:
         query = query.filter(Task.status == status)
@@ -162,6 +184,12 @@ def get_user_tasks(
                     "category": task.category,
                     "due_date": task.due_date.isoformat() if task.due_date else None,
                     "remarks": task.remarks,
+                    "assignee": {
+                        "id": str(task.assignee.id),
+                        "name": task.assignee.name,
+                        "email": task.assignee.email,
+                        "org_role": task.assignee.org_role
+                    } if task.assignee else None,
                     "executive_order": {
                         "id": str(task.executive_order.id),
                         "title": task.executive_order.title
@@ -169,6 +197,7 @@ def get_user_tasks(
                 }
                 for task in tasks
             ],
+            "assignee": assignee_info,
             "pagination": {
                 "total": total,
                 "limit": limit,
@@ -559,20 +588,23 @@ def get_pmo_employees(
     limit: int = 50,
     offset: int = 0
 ):
-    """Get employees under PMO"""
+    """Get executors who have tasks from EOs assigned to this PMO"""
     if current_user.role != "reviewer":
         raise HTTPException(status_code=403, detail="Access denied - PMO role required")
     
-    # Get employees under this PMO (executors)
-    query = db.query(User).filter(User.role == "executor")
+    # Get executors who have tasks from EOs assigned to this PMO
+    # This ensures PMOs only see executors relevant to their assigned EOs
+    query = db.query(User).distinct().join(Task).join(ExecutiveOrder).join(EOPMOAssignment).filter(
+        User.role == "executor",
+        EOPMOAssignment.pmo_id == current_user.id
+    )
     
-    # For now, we'll get all executors - implement proper hierarchy logic
     total = query.count()
     employees = query.offset(offset).limit(limit).all()
     
     return {
         "success": True,
-        "message": f"Retrieved {len(employees)} employees under PMO",
+        "message": f"Retrieved {len(employees)} executors with tasks from your assigned EOs",
         "data": {
             "employees": [
                 {
